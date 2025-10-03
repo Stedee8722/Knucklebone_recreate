@@ -54,6 +54,12 @@ class Bot(commands.Bot):
         self.logger.info("Commands are now synced!")
         print("______________________________")
 
+    async def setup_without_sync(self) -> None:
+        print("______________________________")
+        print("____________Setup:____________")
+        await self.load_cogs()
+        print("______________________________")
+
     async def on_ready(self):
         await self.wait_until_ready()
         self.logger.info(f"Now logging in as {self.user}")
