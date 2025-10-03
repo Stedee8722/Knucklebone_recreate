@@ -16,7 +16,7 @@ class ReloadCog(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred while running the setup hook: {e}")
 
-    @commands.hybrid_command(name="reload_no_sync", description="Reruns the bot's setup hook without syncing commands.", alias=["reload_nosync", "reload_without_sync"])
+    @commands.hybrid_command(name="reload_no_sync", description="Reruns the bot's setup hook without syncing commands.", aliases=["reload_nosync", "reload_without_sync"])
     @commands.check_any(commands.is_owner())
     async def reload_no_sync(self, ctx: commands.Context):
         """Runs the setup hook from the bot's class without syncing commands."""

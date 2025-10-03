@@ -1,1 +1,7 @@
 Making difficult scale with how likely ai is to play good moves
+
+making games play in thread or text
+
+save server config into a json
+
+save game data to a json in the background so it can be reloadable
