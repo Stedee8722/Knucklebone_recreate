@@ -11,8 +11,8 @@ class KnucklebonesCog(commands.Cog):
     @app_commands.describe(opponent="Your opponent?")
     async def knucklebones(self, ctx: commands.Context, opponent: discord.Member):
         game = game_util.KnuckleboneGame(ctx.author.id, opponent.id)
-        view = game_view.GameView(game)
         game.start_game()
+        view = game_view.GameView(game)
         await ctx.defer(ephemeral=False)
         await ctx.reply("Debug: opponent is " + str(opponent) + f" ({opponent.id})", view=view, embed=game.get_embed())
 

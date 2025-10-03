@@ -1,3 +1,3 @@
-import random
-for i in range(0,3,1): print(i)
-for i in range(2,-1,-1): print(i)
+dict = {"hi": {"there": 5}, "hello": {"world": 10}}
+
+print(dict["hi"])

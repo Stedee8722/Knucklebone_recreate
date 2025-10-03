@@ -5,6 +5,13 @@ NUMBER_OF_COLUMNS = 3
 NUMBER_OF_DICES_PER_COLUMN = 3
 NUMBER_OF_SIDES_PER_DICE = 6
 SAVE_FILE = "Data/game_data.json"
+KNUKLEBONES_EMOJI = "<:knucklebones:1423761306447511552>"
+DICE_1_EMOJI = "<:dice_1:1423761282183594246>"
+DICE_2_EMOJI = "<:dice_2:1423761286747131904>"
+DICE_3_EMOJI = "<:dice_3:1423761292677873724>"
+DICE_4_EMOJI = "<:dice_4:1423761295001522198>"
+DICE_5_EMOJI = "<:dice_5:1423761297568174101>"
+DICE_6_EMOJI = "<:dice_6:1423761301423001630>"
 
 class KnuckleboneGame:
     def __init__(self, player_one_id: int, player_two_id: int):
@@ -31,7 +38,7 @@ class KnuckleboneGame:
         self.roll_dice()
 
     def next_turn(self) -> None:
-        self.current_player = NUMBER_OF_PLAYERS - 1 - self.current_player
+        self.current_player = 1 - self.current_player
         self.current_turn += 1
         self.roll_dice()
     
@@ -51,45 +58,39 @@ class KnuckleboneGame:
             else:
                 raise ValueError("Input must be an integer between 0 and " + str(amount - 1) + ". You provided: " + str(input))
     
-    def check_column_space(self, board_num: int, column: int) -> bool:
-        self.check_input(board_num, NUMBER_OF_PLAYERS)
+    def check_column_space(self, column: int) -> bool:
         self.check_input(column, NUMBER_OF_COLUMNS)
-        board = self.boards[board_num]
+        board = self.boards[self.current_player]
         column_data = board[column]
+        print("Checking column space for column " + str(column) + " on player " + str(self.current_player) + "'s board:")
+        print(column_data)
         return 0 in column_data
     
-    def place_dice(self, board_num: int, column: int) -> None:
-        self.check_input(board_num, NUMBER_OF_PLAYERS)
+    def place_dice(self, column: int) -> None:
         self.check_input(column, NUMBER_OF_COLUMNS)
         self.check_input(self.dice, NUMBER_OF_SIDES_PER_DICE, from_zero=False)
-        board = self.boards[board_num]
-        column_data = board[column]
-        for i in range(len(column_data)):
-            if column_data[i] == 0:
-                column_data[i] = self.dice
+        for i in range(NUMBER_OF_DICES_PER_COLUMN):
+            if self.boards[self.current_player][column][i] == 0:
+                self.boards[self.current_player][column][i] = self.dice
                 break
-        self.save_turn_history(board_num, column, self.dice)
-        self.check_clash(board_num, column, self.dice)
+        self.save_turn_history(column)
+        self.check_clash(column)
         self.check_game_over()
         self.move_dice_down()
-        self.next_turn()
+        self.save()
+        if not self.isGameOver:
+            self.next_turn()
 
-    def save_turn_history(self, board_num: int, column: int) -> None:
-        self.check_input(board_num, NUMBER_OF_PLAYERS)
-        if board_num == 0:
+    def save_turn_history(self, column: int) -> None:
+        if self.current_player == 0:
             self.turn_history["board_one"].append({"column": column, "dice": self.dice, "turn": self.current_turn})
-        elif board_num == 1:
+        elif self.current_player == 1:
             self.turn_history["board_two"].append({"column": column, "dice": self.dice, "turn": self.current_turn})
 
-    def check_clash(self, board_num: int, column: int) -> None:
-        self.check_input(board_num, NUMBER_OF_PLAYERS)
-        self.check_input(column, NUMBER_OF_COLUMNS)
-        self.check_input(self.dice, NUMBER_OF_SIDES_PER_DICE, from_zero=False)
-        board = self.boards[board_num]
-        column_data = board[column]
-        for i in range(len(column_data)):
-            if column_data[i] == self.dice:
-                column_data[i] = 0
+    def check_clash(self, column: int) -> None:
+        for i in range(NUMBER_OF_DICES_PER_COLUMN):
+            if self.boards[1 - self.current_player][column][i] == self.dice:
+                self.boards[1 - self.current_player][column][i] = 0
 
     def calc_total(self, board_num: int) -> int:
         total = 0
@@ -119,12 +120,12 @@ class KnuckleboneGame:
                         column[i + 1] = 0
 
     def check_game_over(self) -> int:
-        for board in self.boards:
-            for column in board:
-                if 0 in column:
-                    return False
+        board = self.boards[self.current_player]
+        for column in board:
+            if 0 in column:
+                return False
         self.isGameOver = True
-        return self.get_winner(self)
+        return self.get_winner()
     
     def get_winner(self) -> int:
         if self.winner != -1:
@@ -134,16 +135,17 @@ class KnuckleboneGame:
         score_one = self.calc_total(0)
         score_two = self.calc_total(1)
         if score_one > score_two:
+            self.winner = 0
             return 0
         elif score_two > score_one:
+            self.winner = 1
             return 1
         else:
             return 2  # Tie
         
-    def resign(self, board_num: int) -> None:
-        self.check_input(board_num, NUMBER_OF_PLAYERS)
+    def resign(self) -> None:
         self.isGameOver = True
-        if board_num == 0:
+        if self.current_player == 0:
             self.winner = 1
         else:
             self.winner = 0
@@ -158,30 +160,48 @@ class KnuckleboneGame:
     def get_dice(self):
         return self.dice
     
-    def convert_value_to_emoji(self, value: int) -> str:
+    def convert_value_to_emoji(self, value: int, special: bool=False) -> str:
         if value == 0:
             return "⬛"
-        elif value == 1:
-            return "1️⃣"
-        elif value == 2:
-            return "2️⃣"
-        elif value == 3:
-            return "3️⃣"
-        elif value == 4:
-            return "4️⃣"
-        elif value == 5:
-            return "5️⃣"
-        elif value == 6:
-            return "6️⃣"
+        if special:
+            match value:
+                case 1:
+                    return DICE_1_EMOJI
+                case 2:
+                    return DICE_2_EMOJI
+                case 3:
+                    return DICE_3_EMOJI
+                case 4:
+                    return DICE_4_EMOJI
+                case 5:
+                    return DICE_5_EMOJI
+                case 6:
+                    return DICE_6_EMOJI
         else:
+            match value:
+                case 1:
+                    return "1️⃣"
+                case 2:
+                    return "2️⃣"
+                case 3:
+                    return "3️⃣"
+                case 4:
+                    return "4️⃣"
+                case 5:
+                    return "5️⃣"
+                case 6:
+                    return "6️⃣"
+        if value < 0 or value > 6:
             raise ValueError("Value must be between 0 and 6, you provided: " + str(value))
     
     def get_embed(self) -> discord.Embed:
-        game = "\n".join(f"`{self.calc_column_total(0, col)}` {self.convert_value_to_emoji(col+1) if self.current_player == 0 else '🕯️'}{"".join(self.convert_value_to_emoji(_) for _ in self.boards[0][col][::-1])}:placeholder:{"".join(self.convert_value_to_emoji(_) for _ in self.boards[1][col])}{self.convert_value_to_emoji(col+1) if self.current_player == 1 else '🕯️'} `{self.calc_column_total(1, col)}`" for col in range(3))
+        game = "\n".join(f"`{self.calc_column_total(0, col):02d}` {self.convert_value_to_emoji(col+1) if self.current_player == 0 and not self.isGameOver else '🕯️'}{"".join(self.convert_value_to_emoji(_, True) for _ in self.boards[0][col][::-1])}{KNUKLEBONES_EMOJI}{"".join(self.convert_value_to_emoji(_, True) for _ in self.boards[1][col])}{self.convert_value_to_emoji(col+1) if self.current_player == 1 and not self.isGameOver else '🕯️'} `{self.calc_column_total(1, col):02d}`" for col in range(3))
         embed = discord.Embed(title=f"TURN {self.current_turn}", description=game, color=discord.Color.green() if self.isGameOver else discord.Color.blue() if self.current_player == 0 else discord.Color.yellow())
         
+        embed.set_footer(text=f"Player 1: {self.calc_total(0):02d} | Player 2: {self.calc_total(1):02d} | Dice: {self.convert_value_to_emoji(self.dice)} | Game ID: {self.uuid}")
+
         if self.isGameOver:
-            winner_text = "It's a tie!" if self.winner == 2 else f"Player {self.winner + 1} wins!"
+            winner_text = "It's a tie!" if self.get_winner() == 2 else f"Player {self.get_winner() + 1} wins!"
             embed.add_field(name="Game Over", value=winner_text, inline=False)
         return embed
     
@@ -213,8 +233,7 @@ class KnuckleboneGame:
         game.dice = data["dice"]
         return game
 
-    @staticmethod
-    async def save(self):
+    def save(self):
         """Save the current game state to a file."""
         import os
         if not os.path.exists(SAVE_FILE):
@@ -229,7 +248,6 @@ class KnuckleboneGame:
         with open(SAVE_FILE, "w") as f:
             json.dump(data, f, indent=4)
 
-    @staticmethod
     def load(self, game_id: str):
         """Load game by id from the save file."""
         import json, os

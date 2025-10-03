@@ -48,7 +48,7 @@ class Bot(commands.Bot):
         print("______________________________")
         print("____________Setup:____________")
         await self.load_cogs()
-        guild = discord.Object(id = 1008734732688834680)
+        guild = discord.Object(id = 1342502309929812018)
         self.tree.copy_global_to(guild = guild)
         await self.tree.sync(guild = guild)
         self.logger.info("Commands are now synced!")
@@ -67,14 +67,14 @@ class Bot(commands.Bot):
         print("______________________________")
         print("_____________Logs:____________")
         activity = discord.Game(name="Ready to (T)roll!")
-        await client.change_presence(activity=activity)
+        #await client.change_presence(activity=activity)
 
-    async def on_command_error(self, ctx, error) -> None:
-        try:
-            await ctx.reply(f"{error}", ephemeral = True)
-            self.logger.error(f"{error}")
-        except Exception as error:
-            self.logger.error(f"{error}")
+    #async def on_command_error(self, ctx, error) -> None:
+    #    try:
+    #        await ctx.reply(f"{error}", ephemeral = True)
+    #        self.logger.error(f"{error}")
+    #    except Exception as error:
+    #        self.logger.error(f"{error}")
 
 if __name__ == "__main__":
     client = Bot()
