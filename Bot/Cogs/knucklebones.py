@@ -120,8 +120,13 @@ class KnucklebonesCog(commands.Cog):
         }
         with open("Data/server_config.json", "r") as file:
             server_config = json.load(file)
+        if f"{ctx.guild.id}" not in server_config:
+            server_config[f"{ctx.guild.id}"] = default_config
         if config == "reset_all":
             server_config[f"{ctx.guild.id}"] = default_config
+            with open("Data/server_config.json", "w") as file:
+                json.dump(server_config, file, indent=4)
+            await ctx.reply(f"Set all config to default values", ephemeral=True)
         elif value == -1:
             server_config[f"{ctx.guild.id}"][config] = 1 - server_config[f"{ctx.guild.id}"][config]
         else:
