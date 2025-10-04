@@ -57,7 +57,10 @@ class GameView(discord.ui.View):
         if self.delete_thread_after_game and self.thread:
             await self.thread.send(f'Game will self-destruct <t:{datetime.now().timestamp().__round__() + 60}:R>. Say "gg" while you can!')
             await asyncio.sleep(60)
-            await self.thread.delete()
+            try:
+                await self.thread.delete()
+            except discord.errors.NotFound:
+                pass 
         else:
             await self.thread.send(f'Game over, gg!')
     

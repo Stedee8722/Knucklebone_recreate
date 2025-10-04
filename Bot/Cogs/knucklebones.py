@@ -52,9 +52,9 @@ class KnucklebonesCog(commands.Cog):
                 await ctx.send(f"You have challenged **{opponent.name}** to continue a game of knucklebones!")
                 await ctx.channel.send(content=f"<@{opponent.id}>! You have been challenged to continue a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view, embed=game.get_embed())
                 return
-            with open("Data/bot_data.json", "r") as file:
-                bot_data = json.load(file)
-            game_number = bot_data["game_counter"]
+            with open("Data/server_config.json", "r") as file:
+                server_config = json.load(file)
+            game_number = server_config[f"{ctx.guild.id}"]["game_counter"]
             if opponent.id == ctx.bot.user.id:
                 game = game_util.KnuckleboneGame(ctx.author, ctx.bot.user, game_number, True)
                 game.start_game()
@@ -69,12 +69,12 @@ class KnucklebonesCog(commands.Cog):
                 else:
                     view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game)
                     await message.edit(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
-                with open("Data/bot_data.json", "r") as file:
-                    bot_data = json.load(file)
-                if bot_data["game_counter"] >= game.game_number:
-                    bot_data["game_counter"] += 1
+                with open("Data/server_config.json", "r") as file:
+                    server_config = json.load(file)
+                if server_config[f"{ctx.guild.id}"]["game_counter"] >= game.game_number:
+                    server_config[f"{ctx.guild.id}"]["game_counter"] += 1
                     with open("Data/bot_data.json", "w") as file:
-                        json.dump(bot_data, file, indent=4)
+                        json.dump(server_config, file, indent=4)
                 game_manager.add_game(uuid)
                 if game.current_player == 1:
                     await view.start_bot_move(message)

@@ -66,15 +66,15 @@ class Bot(commands.Bot):
         self.logger.info("Howdy! I am now online!")
         print("______________________________")
         print("_____________Logs:____________")
-        activity = discord.Game(name="Ready to (T)roll!")
-        #await client.change_presence(activity=activity)
+        activity = discord.Game(name="Interested in a game of Knucklebones?")
+        await client.change_presence(activity=activity)
 
-    #async def on_command_error(self, ctx, error) -> None:
-    #    try:
-    #        await ctx.reply(f"{error}", ephemeral = True)
-    #        self.logger.error(f"{error}")
-    #    except Exception as error:
-    #        self.logger.error(f"{error}")
+    async def on_command_error(self, ctx, error) -> None:
+        try:
+            await ctx.reply(f"{error}", ephemeral = True)
+            self.logger.error(f"{error}")
+        except Exception as error:
+            self.logger.error(f"{error}")
 
 if __name__ == "__main__":
     client = Bot()

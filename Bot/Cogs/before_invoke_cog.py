@@ -34,14 +34,14 @@ class BeforeInvokeCog(commands.Cog, name="before_invoke_cog"):
         user_data[f"{ctx.author.id}"]["used_commands"] += 1
 
         # bot data checks
-        bot_data_checks = ["total_used_commands", "last_reset", "total_games_played", "game_counter"]
+        bot_data_checks = ["total_used_commands", "last_reset", "total_games_played"]
         for check in bot_data_checks:
             if check not in bot_data:
                 if check == "last_reset":
                     bot_data[check] = round(datetime.datetime.now().timestamp())
                     continue
                 self.bot.logger.info(f"{check} doesn't exist. Generating...")
-                bot_data[check] = 1 if check in ["game_counter"] else 0
+                bot_data[check] = 0
         bot_data["total_used_commands"] += 1
 
         # bot config checks
@@ -53,14 +53,14 @@ class BeforeInvokeCog(commands.Cog, name="before_invoke_cog"):
                 edited_bot_config = 1
 
         # server config checks
-        server_config_checks = ["games_in_thread", "specified_channel", "edit_game_message", "log_moves", "delete_thread_after_game"]
+        server_config_checks = ["games_in_thread", "specified_channel", "edit_game_message", "log_moves", "delete_thread_after_game", "game_counter"]
         if f"{ctx.guild.id}" not in server_config:
             self.bot.logger.info(f"{ctx.guild.id} doesn't exist in server config. Generating...")
             server_config[f"{ctx.guild.id}"] = {}
         for check in server_config_checks:
             if check not in server_config[f"{ctx.guild.id}"]:
                 self.bot.logger.info(f"{check} doesn't exist in server config. Generating...")
-                server_config[f"{ctx.guild.id}"][check] = 1 if check in ["games_in_thread", "log_moves", "delete_thread_after_game"] else 0
+                server_config[f"{ctx.guild.id}"][check] = 1 if check in ["games_in_thread", "log_moves", "delete_thread_after_game", "game_counter"] else 0
                 edited_server_config = 1
 
         # save changes

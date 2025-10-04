@@ -16,7 +16,7 @@ DICE_5_EMOJI = "<:dice_5:1423761297568174101>"
 DICE_6_EMOJI = "<:dice_6:1423761301423001630>"
 
 class KnuckleboneGame:
-    def __init__(self, player_one: discord.Member, player_two: discord.Member, game_number:int, bot_player: bool = False):
+    def __init__(self, player_one: discord.Member, player_two: discord.Member, game_number:int, guild_id:int, bot_player: bool = False):
         self.boards = [
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]],  # Player 1's board
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]]   # Player 2's board
@@ -25,15 +25,13 @@ class KnuckleboneGame:
         self.game_number = game_number
         self.current_player = -1  # Random player starts
         self.uuid = uuid.uuid4()
+        self.guild_id = guild_id
         self.player_one = player_one
         self.player_two = player_two
         self.players = [player_one.id, player_two.id]
         self.dice = 0
         self.current_turn = 0
-        self.turn_history = {
-            "board_one": [],
-            "board_two": []
-        }  # To keep track of turns
+        self.turn_history = []  # To keep track of turns
         self.winner = -1  # -1 means no winner yet
         self.last_dice = 0
         self.bot_player = bot_player
@@ -125,10 +123,7 @@ class KnuckleboneGame:
         return random.choice(best_columns)
 
     def save_turn_history(self, column: int) -> None:
-        if self.current_player == 0:
-            self.turn_history["board_one"].append({"column": column, "dice": self.dice, "turn": self.current_turn})
-        elif self.current_player == 1:
-            self.turn_history["board_two"].append({"column": column, "dice": self.dice, "turn": self.current_turn})
+        self.turn_history.append({"board": self.current_player, "column": column, "dice": self.dice, "turn": self.current_turn})
 
     def count_matching_dice_self(self, column: int) -> int:
         count = 0
@@ -319,7 +314,7 @@ class KnuckleboneGame:
         with open(SAVE_FILE, "r") as f:
             data = json.load(f)
 
-        data[str(self.uuid)] = self.to_dict()
+        data[self.guild_id][str(self.uuid)] = self.to_dict()
 
         with open(SAVE_FILE, "w") as f:
             json.dump(data, f, indent=4)
@@ -337,7 +332,7 @@ class KnuckleboneGame:
         if game_id not in data:
             return None
 
-        return KnuckleboneGame.from_dict(ctx, data[game_id])
+        return KnuckleboneGame.from_dict(ctx, data[ctx.guild.id][game_id])
     
     def save_data(self):
         import json, os
