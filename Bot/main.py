@@ -48,9 +48,7 @@ class Bot(commands.Bot):
         print("______________________________")
         print("____________Setup:____________")
         await self.load_cogs()
-        guild = discord.Object(id = 1342502309929812018)
-        self.tree.copy_global_to(guild = guild)
-        await self.tree.sync(guild = guild)
+        await self.tree.sync()
         self.logger.info("Commands are now synced!")
         print("______________________________")
 
