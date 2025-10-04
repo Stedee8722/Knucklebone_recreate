@@ -1,3 +1,4 @@
+from typing import List
 import discord, time, datetime, json
 from discord.ext import commands
 from discord import app_commands
@@ -106,6 +107,47 @@ class KnucklebonesCog(commands.Cog):
         with open("Data/server_config.json", "w") as file:
             json.dump(server_config, file, indent=4)
         await ctx.reply(f"Set channel to {channel.name} ({channel.id})", ephemeral=True)
+
+    @commands.hybrid_command(name="configure", with_app_command=True, description="Set the bot's config for your server", aliases=["config"])
+    @app_commands.describe(config="The config")
+    async def configure(self, ctx: commands.Context, config:str, value:bool):
+        with open("Data/server_config.json", "r") as file:
+            server_config = json.load(file)
+        server_config[f"{ctx.guild.id}"][config] = 1 if value else 0
+        with open("Data/server_config.json", "w") as file:
+            json.dump(server_config, file, indent=4)
+        await ctx.reply(f"Set {config} to {value}", ephemeral=True)
+
+    @configure.autocomplete("config")
+    async def config_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> List[app_commands.Choice[str]]:
+        choices = ["Games in Thread", "Edit Game Message", "Log Moves", "Delete Thread after Game"]
+        return [
+            app_commands.Choice(name=choice, value="_".join(choice.lower().split()))
+            for choice in choices if current.lower() in choice.lower()
+        ]
+    
+    @configure.autocomplete("value")
+    async def bool_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> list[app_commands.Choice[str]]:
+        choices = {
+            "true": "True",
+            "false": "False",
+            "1": "True",
+            "0": "False"
+        }
+
+        return [
+            app_commands.Choice(name=k, value=v)
+            for k, v in choices.items()
+            if current.lower() in k
+        ]
 
 async def setup(bot):
     await bot.add_cog(KnucklebonesCog(bot))
