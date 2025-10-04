@@ -27,7 +27,7 @@ class ConfirmView(discord.ui.View):
         if not await self.check_owner(interaction): return
         if not self.game:
             flag = 1
-            game = game_util.KnuckleboneGame(self.player_one, self.player_two, self.game_number)
+            game = game_util.KnuckleboneGame(self.player_one, self.player_two, self.game_number, interaction.guild.id)
             game.start_game()
             view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game, self.thread)
         else:

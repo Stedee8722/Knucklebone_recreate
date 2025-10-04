@@ -56,7 +56,7 @@ class KnucklebonesCog(commands.Cog):
                 server_config = json.load(file)
             game_number = server_config[f"{ctx.guild.id}"]["game_counter"]
             if opponent.id == ctx.bot.user.id:
-                game = game_util.KnuckleboneGame(ctx.author, ctx.bot.user, game_number, True)
+                game = game_util.KnuckleboneGame(ctx.author, ctx.bot.user, game_number, ctx.guild.id, True)
                 game.start_game()
                 message = await ctx.reply("Oh, you're challenging me?")
                 time.sleep(2)

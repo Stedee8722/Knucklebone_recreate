@@ -314,7 +314,10 @@ class KnuckleboneGame:
         with open(SAVE_FILE, "r") as f:
             data = json.load(f)
 
-        data[self.guild_id][str(self.uuid)] = self.to_dict()
+        if f"{self.guild_id}" not in data:
+            data[f"{self.guild_id}"] = {}
+
+        data[f"{self.guild_id}"][str(self.uuid)] = self.to_dict()
 
         with open(SAVE_FILE, "w") as f:
             json.dump(data, f, indent=4)

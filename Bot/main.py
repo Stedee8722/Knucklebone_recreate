@@ -66,7 +66,7 @@ class Bot(commands.Bot):
         self.logger.info("Howdy! I am now online!")
         print("______________________________")
         print("_____________Logs:____________")
-        activity = discord.Game(name="Interested in a game of Knucklebones?")
+        activity = discord.Game(name="Knucklebones and kicking asses.")
         await client.change_presence(activity=activity)
 
     async def on_command_error(self, ctx, error) -> None:
