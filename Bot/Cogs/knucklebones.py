@@ -93,6 +93,7 @@ class KnucklebonesCog(commands.Cog):
             return
         
     @commands.hybrid_command(name="set-channel", with_app_command=True, description="Sets channel to play Knucklebones")
+    @commands.has_permissions(manage_messages=True)
     @app_commands.describe(channel="The channel to make games")
     async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         with open("Data/server_config.json", "r") as file:
@@ -109,6 +110,7 @@ class KnucklebonesCog(commands.Cog):
         await ctx.reply(f"Set channel to {channel.name} ({channel.id})", ephemeral=True)
 
     @commands.hybrid_command(name="configure", with_app_command=True, description="Set the bot's config for your server", aliases=["config"])
+    @commands.has_permissions(manage_messages=True)
     @app_commands.describe(config="The config")
     async def configure(self, ctx: commands.Context, config:str, value:int=-1):
         default_config = {
