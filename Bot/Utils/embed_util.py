@@ -29,9 +29,32 @@ async def random_stats_embed_build(ctx:commands.Context, mode:int, data:dict[str
         embed = Embed(title=f"User info", color=Colour.from_str("#32CD32"), description=f"User: {user.display_name}\nID: {user.id}")
         if "used_commands" in data:
             embed.add_field(name="Used commands", value=data["used_commands"])
-        embed.add_field(name="Knucklebones", value=f"Wins: {data["kb_wins"] if "kb_wins" in data else "-"}\nLosses: {data["kb_losses"] if "kb_losses" in data else "-"}\nW/LR: {round(data['kb_wins']/data['kb_losses'], 2) if "kb_wins" in data and "kb_losses" in data and data["kb_losses"] != 0 else "-"}\nGames played: {data["kb_games_played"] if "kb_games_played" in data else "-"}")
+        embed.add_field(name="Knucklebones (Overall)", value=f"Wins: {data["kb_wins"] if "kb_wins" in data else "-"}\nLosses: {data["kb_losses"] if "kb_losses" in data else "-"}\nW/LR: {round(data['kb_wins']/data['kb_losses'], 2) if "kb_wins" in data and "kb_losses" in data and data["kb_losses"] != 0 else "-"}\nGames played: {data["kb_games_played"] if "kb_games_played" in data else "-"}", inline=False)
+        embed.add_field(name="Knucklebones (This server)", value=f"Wins: {data["kb_wins"] if "kb_wins" in data else "-"}\nLosses: {data["kb_losses"] if "kb_losses" in data else "-"}\nW/LR: {round(data['kb_wins']/data['kb_losses'], 2) if "kb_wins" in data and "kb_losses" in data and data["kb_losses"] != 0 else "-"}\nGames played: {data["kb_games_played"] if "kb_games_played" in data else "-"}")
         embed.set_thumbnail(url=user.display_avatar)
     embed.set_author(name="Random statistics")
+    embed.set_footer(text=f"Requested by {ctx.author.display_name} • Started tracking on {datetime.fromtimestamp(last_reset).strftime("%d/%m/%Y %H:%M")}", icon_url=ctx.author.display_avatar)
+    return embed
+
+async def kb_stats_embed_build(ctx:commands.Context, overall_data:dict[str, int], server_data:dict[str, int], last_reset, id=0) -> Embed:
+    """
+    Builds an embed with Knucklebones statistics based on the provided data.
+    Args:
+        ctx: The context of the command.
+        mode (int): The mode for the statistics (0 for bot info, 1 for user info).
+        overall_data (dict[str, int]): The overall data containing statistics.
+        server_data (dict[str, int]): The server-specific data containing statistics.
+        id (int): The ID of the user if mode is 1.
+        last_reset (int): The timestamp of the last reset.
+    Returns:
+        Embed: The constructed embed with the statistics.
+    """
+    user = await user_handler.user_parser(ctx, str(id))
+    embed = Embed(title=f"{user.name}'s statistics", color=Colour.from_str("#32CD32"), description=f"User: {user.display_name}\nID: {user.id}")
+    embed.add_field(name="Knucklebones (Overall)", value=f"Wins: {overall_data["kb_wins"] if "kb_wins" in overall_data else "-"}\nLosses: {overall_data["kb_losses"] if "kb_losses" in overall_data else "-"}\nW/LR: {round(overall_data['kb_wins']/overall_data['kb_losses'], 2) if "kb_wins" in overall_data and "kb_losses" in overall_data and overall_data["kb_losses"] != 0 else "-"}\nGames played: {overall_data["kb_games_played"] if "kb_games_played" in overall_data else "-"}")
+    embed.add_field(name="Knucklebones (This server)", value=f"Wins: {server_data["kb_wins"] if "kb_wins" in server_data else "-"}\nLosses: {server_data["kb_losses"] if "kb_losses" in server_data else "-"}\nW/LR: {round(server_data['kb_wins']/server_data['kb_losses'], 2) if "kb_wins" in server_data and "kb_losses" in server_data and server_data["kb_losses"] != 0 else "-"}\nGames played: {server_data["kb_games_played"] if "kb_games_played" in server_data else "-"}")
+    embed.set_thumbnail(url=user.display_avatar)
+    embed.set_author(name="Knucklebones statistics")
     embed.set_footer(text=f"Requested by {ctx.author.display_name} • Started tracking on {datetime.fromtimestamp(last_reset).strftime("%d/%m/%Y %H:%M")}", icon_url=ctx.author.display_avatar)
     return embed
 

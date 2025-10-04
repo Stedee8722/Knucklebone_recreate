@@ -387,20 +387,22 @@ class KnuckleboneGame:
                 "kb_losses": 0,
                 "kb_games_played": 0
             }
-        if self.winner == 0:
-            user_data[str(self.players[0])]["kb_wins"] += 1
-            user_data[str(self.players[1])]["kb_losses"] += 1
-            server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_wins"] += 1
-            server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_losses"] += 1
-        elif self.winner == 1:
-            user_data[str(self.players[1])]["kb_wins"] += 1
-            user_data[str(self.players[0])]["kb_losses"] += 1
-            server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_wins"] += 1
-            server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_losses"] += 1
+        if self.players[0] != self.players[1]:
+            if self.winner == 0:
+                user_data[str(self.players[0])]["kb_wins"] += 1
+                user_data[str(self.players[1])]["kb_losses"] += 1
+                server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_wins"] += 1
+                server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_losses"] += 1
+            elif self.winner == 1:
+                user_data[str(self.players[1])]["kb_wins"] += 1
+                user_data[str(self.players[0])]["kb_losses"] += 1
+                server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_wins"] += 1
+                server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_losses"] += 1
         user_data[str(self.players[0])]["kb_games_played"] += 1
-        user_data[str(self.players[1])]["kb_games_played"] += 1
         server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_games_played"] += 1
-        server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_games_played"] += 1
+        if self.players[0] != self.players[1]:
+            user_data[str(self.players[1])]["kb_games_played"] += 1
+            server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_games_played"] += 1
 
         if "total_games_played" not in bot_data:
             bot_data["total_games_played"] = 0
@@ -415,4 +417,4 @@ class KnuckleboneGame:
         with open(USER_DATA_FILE, "w") as f:
             json.dump(user_data, f, indent=4)
         with open(SERVER_DATA_FILE, "w") as f:
-            json.dump(user_data, f, indent=4)
+            json.dump(server_data, f, indent=4)

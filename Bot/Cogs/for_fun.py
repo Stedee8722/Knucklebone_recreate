@@ -21,6 +21,19 @@ class ForFunCog(commands.Cog, name="for_fun"):
             bot_data = json.load(file)
         await ctx.reply(content="", embed = await embed_util.random_stats_embed_build(ctx, 1, user_data[f"{ctx.author.id}"], bot_data["last_reset"], ctx.author.id), view = view)
         return
+    
+    #!kb_stats
+    @commands.hybrid_command(name="kb_stats", description="Get your overall server stats.", with_app_command=True, aliases=["knucklebones_stats"])
+    async def kb_stats(self, ctx):
+        await ctx.defer(ephemeral=True)
+        with open("Data/user_data.json", "r") as file:
+            user_data = json.load(file)
+        with open("Data/server_data.json", "r") as file:
+            server_data = json.load(file)
+        with open("Data/bot_data.json", "r") as file:
+            bot_data = json.load(file)
+        await ctx.reply(content="", embed = await embed_util.kb_stats_embed_build(ctx, user_data[f"{ctx.author.id}"], server_data[f"{ctx.guild.id}"]["users"][f"{ctx.author.id}"], bot_data["last_reset"], ctx.author.id))
+        return
 
 async def setup(bot) -> None:
     await bot.add_cog(ForFunCog(bot))
