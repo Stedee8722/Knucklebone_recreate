@@ -110,13 +110,25 @@ class KnucklebonesCog(commands.Cog):
 
     @commands.hybrid_command(name="configure", with_app_command=True, description="Set the bot's config for your server", aliases=["config"])
     @app_commands.describe(config="The config")
-    async def configure(self, ctx: commands.Context, config:str, value:bool):
+    async def configure(self, ctx: commands.Context, config:str, value:int=-1):
+        default_config = {
+            "games_in_thread": 1,
+            "specified_channel": 0,
+            "edit_game_message": 0,
+            "log_moves": 1,
+            "delete_thread_after_game": 1
+        }
         with open("Data/server_config.json", "r") as file:
             server_config = json.load(file)
-        server_config[f"{ctx.guild.id}"][config] = 1 if value else 0
+        if config == "reset_all":
+            server_config[f"{ctx.guild.id}"] = default_config
+        elif value == -1:
+            server_config[f"{ctx.guild.id}"][config] = 1 - server_config[f"{ctx.guild.id}"][config]
+        else:
+            server_config[f"{ctx.guild.id}"][config] = value
         with open("Data/server_config.json", "w") as file:
             json.dump(server_config, file, indent=4)
-        await ctx.reply(f"Set {config} to {value}", ephemeral=True)
+        await ctx.reply(f"Set {config} to {bool(value)}", ephemeral=True)
 
     @configure.autocomplete("config")
     async def config_autocomplete(
@@ -124,7 +136,7 @@ class KnucklebonesCog(commands.Cog):
         interaction: discord.Interaction,
         current: str,
     ) -> List[app_commands.Choice[str]]:
-        choices = ["Games in Thread", "Edit Game Message", "Log Moves", "Delete Thread after Game"]
+        choices = ["Games in Thread", "Edit Game Message", "Log Moves", "Delete Thread after Game", "Reset All"]
         return [
             app_commands.Choice(name=choice, value="_".join(choice.lower().split()))
             for choice in choices if current.lower() in choice.lower()
@@ -137,10 +149,10 @@ class KnucklebonesCog(commands.Cog):
         current: str,
     ) -> list[app_commands.Choice[str]]:
         choices = {
-            "true": "True",
-            "false": "False",
-            "1": "True",
-            "0": "False"
+            "true": 1,
+            "false": 0,
+            "1": 1,
+            "0": 0
         }
 
         return [

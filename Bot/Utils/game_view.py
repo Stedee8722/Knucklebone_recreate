@@ -45,14 +45,14 @@ class GameView(discord.ui.View):
             return False
         return True
     
-    async def check_game_over(self) -> bool:
+    async def check_game_over(self, channel) -> bool:
         if self.game.isGameOver:
             game_manager.remove_game(str(self.game.uuid))
-            asyncio.create_task(self.game_over()) 
+            asyncio.create_task(self.game_over(channel)) 
             return True
         return False
 
-    async def game_over(self) -> None:
+    async def game_over(self, channel) -> None:
         self.stop()
         if self.delete_thread_after_game and self.thread:
             await self.thread.send(f'Game will self-destruct <t:{datetime.now().timestamp().__round__() + 60}:R>. Say "gg" while you can!')
@@ -62,7 +62,7 @@ class GameView(discord.ui.View):
             except discord.errors.NotFound:
                 pass 
         else:
-            await self.thread.send(f'Game over, gg!')
+            await channel.send(f'Game over, gg!')
     
     async def top(self, interaction:discord.Interaction) -> None:
         if not await self.check_owner(interaction): return
@@ -74,7 +74,7 @@ class GameView(discord.ui.View):
             await interaction.response.edit_message(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
         else:
             await interaction.response.send_message(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
-        if await self.check_game_over():
+        if await self.check_game_over(interaction.channel):
             return
         if self.game.bot_player:
             await self.simulate_bot_move(interaction)
@@ -89,7 +89,7 @@ class GameView(discord.ui.View):
             await interaction.response.edit_message(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
         else:
             await interaction.response.send_message(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
-        if await self.check_game_over():
+        if await self.check_game_over(interaction.channel):
             return
         if self.game.bot_player:
             await self.simulate_bot_move(interaction)
@@ -104,7 +104,7 @@ class GameView(discord.ui.View):
             await interaction.response.edit_message(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
         else:
             await interaction.response.send_message(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
-        if await self.check_game_over():
+        if await self.check_game_over(interaction.channel):
             return
         if self.game.bot_player:
             await self.simulate_bot_move(interaction)
@@ -117,7 +117,7 @@ class GameView(discord.ui.View):
             await interaction.response.edit_message(content="", embed=self.game.get_embed(), view=self)
         else:
             await interaction.response.send_message(content="", embed=self.game.get_embed(), view=self)
-        if await self.check_game_over():
+        if await self.check_game_over(interaction.channel):
             return
 
     async def start_bot_move(self, interaction:discord.Interaction) -> None:
@@ -132,7 +132,7 @@ class GameView(discord.ui.View):
                 await interaction.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
             else:
                 await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
-            if await self.check_game_over():
+            if await self.check_game_over(interaction.channel):
                 return
 
     async def simulate_bot_move(self, interaction:discord.Interaction) -> None:
@@ -147,5 +147,5 @@ class GameView(discord.ui.View):
                 await interaction.message.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
             else:   
                 await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
-            if await self.check_game_over():
+            if await self.check_game_over(interaction.channel):
                 return
