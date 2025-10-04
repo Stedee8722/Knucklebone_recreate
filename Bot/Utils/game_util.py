@@ -1,4 +1,4 @@
-import random, uuid, discord, main
+import random, uuid, discord, os
 
 NUMBER_OF_PLAYERS = 2
 NUMBER_OF_COLUMNS = 3
@@ -8,13 +8,13 @@ SAVE_FILE = "Data/game_data.json"
 USER_DATA_FILE = "Data/user_data.json"
 BOT_DATA_FILE = "Data/bot_data.json"
 SERVER_DATA_FILE = "Data/server_data.json"
-KNUKLEBONES_EMOJI = "<:knucklebones:1423761306447511552>"
-DICE_1_EMOJI = "<:dice_1:1423761282183594246>"
-DICE_2_EMOJI = "<:dice_2:1423761286747131904>"
-DICE_3_EMOJI = "<:dice_3:1423761292677873724>"
-DICE_4_EMOJI = "<:dice_4:1423761295001522198>"
-DICE_5_EMOJI = "<:dice_5:1423761297568174101>"
-DICE_6_EMOJI = "<:dice_6:1423761301423001630>"
+KNUKLEBONES_EMOJI = os.getenv("KNUKLEBONES_EMOJI")
+DICE_1_EMOJI = os.getenv("DICE_1_EMOJI")
+DICE_2_EMOJI = os.getenv("DICE_2_EMOJI")
+DICE_3_EMOJI = os.getenv("DICE_3_EMOJI")
+DICE_4_EMOJI = os.getenv("DICE_4_EMOJI")
+DICE_5_EMOJI = os.getenv("DICE_5_EMOJI")
+DICE_6_EMOJI = os.getenv("DICE_6_EMOJI")
 
 class KnuckleboneGame:
     def __init__(self, player_one: discord.Member, player_two: discord.Member, game_number:int, guild_id:int, bot_player: bool = False):
