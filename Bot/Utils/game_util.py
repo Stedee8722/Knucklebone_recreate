@@ -7,6 +7,7 @@ NUMBER_OF_SIDES_PER_DICE = 6
 SAVE_FILE = "Data/game_data.json"
 USER_DATA_FILE = "Data/user_data.json"
 BOT_DATA_FILE = "Data/bot_data.json"
+SERVER_DATA_FILE = "Data/server_data.json"
 KNUKLEBONES_EMOJI = "<:knucklebones:1423761306447511552>"
 DICE_1_EMOJI = "<:dice_1:1423761282183594246>"
 DICE_2_EMOJI = "<:dice_2:1423761286747131904>"
@@ -345,11 +346,17 @@ class KnuckleboneGame:
         if not os.path.exists(BOT_DATA_FILE):
             with open(BOT_DATA_FILE, "w") as f:
                 json.dump({}, f)
+        if not os.path.exists(SERVER_DATA_FILE):
+            with open(SERVER_DATA_FILE, "w") as f:
+                json.dump({}, f)
+        
 
         with open(USER_DATA_FILE, "r") as f:
             user_data = json.load(f)
         with open(BOT_DATA_FILE, "r") as f:
             bot_data = json.load(f)
+        with open(SERVER_DATA_FILE, "r") as f:
+            server_data = json.load(f)
 
         
         if str(self.players[0]) not in user_data:
@@ -366,20 +373,46 @@ class KnuckleboneGame:
                 "kb_losses": 0,
                 "kb_games_played": 0
             }
+        if str(self.players[0]) not in server_data[f"{self.guild_id}"]["users"]:
+            server_data[f"{self.guild_id}"]["users"][str(self.players[0])] = {
+                "used_commands": 0,
+                "kb_wins": 0,
+                "kb_losses": 0,
+                "kb_games_played": 0
+            }
+        if str(self.players[1]) not in server_data[f"{self.guild_id}"]["users"]:
+            server_data[f"{self.guild_id}"]["users"][str(self.players[1])] = {
+                "used_commands": 0,
+                "kb_wins": 0,
+                "kb_losses": 0,
+                "kb_games_played": 0
+            }
         if self.winner == 0:
             user_data[str(self.players[0])]["kb_wins"] += 1
             user_data[str(self.players[1])]["kb_losses"] += 1
+            server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_wins"] += 1
+            server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_losses"] += 1
         elif self.winner == 1:
             user_data[str(self.players[1])]["kb_wins"] += 1
             user_data[str(self.players[0])]["kb_losses"] += 1
+            server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_wins"] += 1
+            server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_losses"] += 1
         user_data[str(self.players[0])]["kb_games_played"] += 1
         user_data[str(self.players[1])]["kb_games_played"] += 1
+        server_data[f"{self.guild_id}"]["users"][str(self.players[0])]["kb_games_played"] += 1
+        server_data[f"{self.guild_id}"]["users"][str(self.players[1])]["kb_games_played"] += 1
 
         if "total_games_played" not in bot_data:
             bot_data["total_games_played"] = 0
         bot_data["total_games_played"] += 1
 
+        if "total_games_played" not in server_data[f"{self.guild_id}"]:
+            server_data[f"{self.guild_id}"]["total_games_played"] = 0
+        server_data[f"{self.guild_id}"]["total_games_played"] += 1
+
         with open(BOT_DATA_FILE, "w") as f:
             json.dump(bot_data, f, indent=4)
         with open(USER_DATA_FILE, "w") as f:
+            json.dump(user_data, f, indent=4)
+        with open(SERVER_DATA_FILE, "w") as f:
             json.dump(user_data, f, indent=4)

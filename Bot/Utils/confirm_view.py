@@ -48,12 +48,12 @@ class ConfirmView(discord.ui.View):
                 await interaction.channel.send("Error: Can't create threads here.")
                 return
             if flag:
-                with open("Data/server_config.json", "r") as file:
-                    server_config = json.load(file)
-                if server_config[f"{interaction.guild.id}"]["game_counter"] >= game.game_number:
-                    server_config[f"{interaction.guild.id}"]["game_counter"] += 1
-                    with open("Data/bot_data.json", "w") as file:
-                        json.dump(server_config, file, indent=4)
+                with open("Data/server_data.json", "r") as file:
+                    server_data = json.load(file)
+                if server_data[f"{interaction.guild.id}"]["game_counter"] >= game.game_number:
+                    server_data[f"{interaction.guild.id}"]["game_counter"] += 1
+                    with open("Data/server_data.json", "w") as file:
+                        json.dump(server_data, file, indent=4)
             game_manager.add_game(str(game.uuid))
         else:
             await interaction.channel.send(f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
