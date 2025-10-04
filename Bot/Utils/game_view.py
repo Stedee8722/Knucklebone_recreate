@@ -143,9 +143,9 @@ class GameView(discord.ui.View):
             await self.check_disable()
             if self.log_moves:
                 await interaction.channel.send(f"**{self.game.player_one.name if self.game.current_player == 1 else self.game.player_two.name}** places {self.game.convert_value_to_emoji(self.game.last_dice, True)} in {['1️⃣ **Top**', '2️⃣ **Mid**', '3️⃣ **Bot**'][last_move]}!", allowed_mentions=False)
-            if self.edit_game_message: 
+            if self.edit_game_message:
                 await interaction.message.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
-            else:   
+            else:
                 await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
             if await self.check_game_over(interaction.channel):
                 return

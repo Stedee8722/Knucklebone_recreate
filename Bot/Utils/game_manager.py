@@ -1,4 +1,4 @@
-active_games = []  # key: uuid or game_number, value: GameView or KnuckleboneGame
+active_games = []
 
 def is_active(identifier: str) -> bool:
     """Check if a game is already active."""
