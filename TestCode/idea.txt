@@ -1,6 +1,12 @@
 Making difficult scale with how likely ai is to play good moves
 
-making games play in thread or text
+making games play in thread or current channel
+
+make config for edit message or make new messages
+
+config for logging moves history
+
+config for deleting thread automatically
 
 save server config into a json
 

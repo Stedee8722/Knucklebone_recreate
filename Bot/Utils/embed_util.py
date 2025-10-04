@@ -22,12 +22,14 @@ async def random_stats_embed_build(ctx:commands.Context, mode:int, data:dict[str
 
         embed.add_field(name="Total used commands", value=data["total_used_commands"])
         embed.add_field(name="Last reset", value=f"<t:{data['last_reset']}:F> (<t:{data['last_reset']}:R>)")
+        embed.add_field(name="Knucklebones", value=f'Total games played: {data["total_games_played"]}')
         embed.set_thumbnail(url=ctx.bot.user.display_avatar)
     else:
         user = await user_handler.user_parser(ctx, str(id))
         embed = Embed(title=f"User info", color=Colour.from_str("#32CD32"), description=f"User: {user.display_name}\nID: {user.id}")
         if "used_commands" in data:
             embed.add_field(name="Used commands", value=data["used_commands"])
+        embed.add_field(name="Knucklebones", value=f"Wins: {data["kb_wins"] if "kb_wins" in data else "-"}\nLosses: {data["kb_losses"] if "kb_losses" in data else "-"}\nW/LR: {round(data['kb_wins']/data['kb_losses'], 2) if "kb_wins" in data and "kb_losses" in data and data["kb_losses"] != 0 else "-"}\nGames played: {data["kb_games_played"] if "kb_games_played" in data else "-"}")
         embed.set_thumbnail(url=user.display_avatar)
     embed.set_author(name="Random statistics")
     embed.set_footer(text=f"Requested by {ctx.author.display_name} • Started tracking on {datetime.fromtimestamp(last_reset).strftime("%d/%m/%Y %H:%M")}", icon_url=ctx.author.display_avatar)

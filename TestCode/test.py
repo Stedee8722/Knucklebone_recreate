@@ -1,3 +1,3 @@
-dict = {"hi": {"there": 5}, "hello": {"world": 10}}
+import random
 
-print(dict["hi"])
+print(random.random())
