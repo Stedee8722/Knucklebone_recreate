@@ -15,6 +15,7 @@ class KnucklebonesCog(commands.Cog):
                 server_config = json.load(file)
             games_in_thread = server_config[f"{ctx.guild.id}"]["games_in_thread"]
             specified_channel = server_config[f"{ctx.guild.id}"]["specified_channel"]
+            channel_to_send = ctx.guild.get_channel(int(specified_channel)) if specified_channel else ctx.channel
             edit_game_message = server_config[f"{ctx.guild.id}"]["edit_game_message"]
             log_moves = server_config[f"{ctx.guild.id}"]["log_moves"]
             delete_thread_after_game = server_config[f"{ctx.guild.id}"]["delete_thread_after_game"]
@@ -39,18 +40,18 @@ class KnucklebonesCog(commands.Cog):
                 if game.player_two.id == ctx.bot.user.id or game.player_one.id == game.player_two.id == ctx.author.id:
                     await ctx.reply("So! We continue.")
                     if games_in_thread:
-                        thread = await ctx.channel.create_thread(name = f"Game {game.game_number} - {game.player_one.name} & {game.player_two.name} (Reload)", type = discord.ChannelType.public_thread)
+                        thread = await channel_to_send.create_thread(name = f"Game {game.game_number} - {game.player_one.name} & {game.player_two.name} (Reload)", type = discord.ChannelType.public_thread)
                         view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread)
                         await thread.add_user(ctx.author)
                         await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
                     else:
                         view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game)
-                        await ctx.reply(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
                     game_manager.add_game(uuid)
                     return
                 view = confirm_view.ConfirmView(game.player_one, game.player_two, opponent.id, game.game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, game = game)
                 await ctx.send(f"You have challenged **{opponent.name}** to continue a game of knucklebones!")
-                await ctx.channel.send(content=f"<@{opponent.id}>! You have been challenged to continue a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view, embed=game.get_embed())
+                await channel_to_send.send(content=f"<@{opponent.id}>! You have been challenged to continue a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view, embed=game.get_embed())
                 return
             with open("Data/server_data.json", "r") as file:
                 server_data = json.load(file)
@@ -62,13 +63,13 @@ class KnucklebonesCog(commands.Cog):
                 time.sleep(2)
                 if games_in_thread:
                     # specified channel
-                    thread = await ctx.channel.create_thread(name = f"Game {game_number} - {ctx.author.name} & {opponent.name}", type = discord.ChannelType.public_thread)
+                    thread = await channel_to_send.create_thread(name = f"Game {game_number} - {ctx.author.name} & {opponent.name}", type = discord.ChannelType.public_thread)
                     view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread)
                     await thread.add_user(ctx.author)
                     await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
                 else:
                     view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game)
-                    await message.edit(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                    await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
                 with open("Data/server_data.json", "r") as file:
                     server_data = json.load(file)
                 if server_data[f"{ctx.guild.id}"]["game_counter"] >= game.game_number:
@@ -84,11 +85,27 @@ class KnucklebonesCog(commands.Cog):
             view = confirm_view.ConfirmView(ctx.author, opponent, opponent.id, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game)
             await ctx.send(f"You have challenged **{opponent.name}** to a game of knucklebones!")
             # specified channel
-            message = await ctx.channel.send(f"<@{opponent.id}>! You have been challenged to a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view)
+            message = await channel_to_send.send(f"<@{opponent.id}>! You have been challenged to a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view)
             view.message = message
         except AttributeError:
-            await ctx.send("Error: Can't create threads here.")
+            await channel_to_send.send("Error: Can't create threads here.")
             return
+        
+    @commands.hybrid_command(name="set-channel", with_app_command=True, description="Sets channel to play Knucklebones")
+    @app_commands.describe(channel="The channel to make games")
+    async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        with open("Data/server_config.json", "r") as file:
+            server_config = json.load(file)
+        if not channel:
+            server_config[f"{ctx.guild.id}"]["specified_channel"] = 0
+            with open("Data/server_config.json", "w") as file:
+                json.dump(server_config, file, indent=4)
+            await ctx.reply(f"Set channel to None", ephemeral=True)
+            return
+        server_config[f"{ctx.guild.id}"]["specified_channel"] = channel.id
+        with open("Data/server_config.json", "w") as file:
+            json.dump(server_config, file, indent=4)
+        await ctx.reply(f"Set channel to {channel.name} ({channel.id})", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(KnucklebonesCog(bot))
