@@ -16,12 +16,13 @@ DICE_5_EMOJI = "<:dice_5:1423761297568174101>"
 DICE_6_EMOJI = "<:dice_6:1423761301423001630>"
 
 class KnuckleboneGame:
-    def __init__(self, player_one: discord.Member, player_two: discord.Member, bot_player: bool = False):
+    def __init__(self, player_one: discord.Member, player_two: discord.Member, game_number:int, bot_player: bool = False):
         self.boards = [
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]],  # Player 1's board
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]]   # Player 2's board
         ]
         self.isGameOver = False
+        self.game_number = game_number
         self.current_player = -1  # Random player starts
         self.uuid = uuid.uuid4()
         self.player_one = player_one
@@ -211,6 +212,8 @@ class KnuckleboneGame:
             self.winner = 1
         else:
             self.winner = 0
+        self.save()
+        self.save_data()
 
     def get_board(self, board_num: int):
         self.check_input(board_num, NUMBER_OF_PLAYERS)
@@ -289,12 +292,13 @@ class KnuckleboneGame:
             "winner": self.winner,
             "current_turn": self.current_turn,
             "bot_player": self.bot_player,
-            "random_stupidity": self.random_stupidity
+            "random_stupidity": self.random_stupidity,
+            "game_number": self.game_number
         }
 
     @classmethod
     def from_dict(cls, ctx, data: dict):
-        game = cls(ctx.guild.get_member(data["players"][0]), ctx.guild.get_member(data["players"][1]))
+        game = cls(ctx.guild.get_member(data["players"][0]), ctx.guild.get_member(data["players"][1]), data["game_number"], data["bot_player"])
         game.uuid = uuid.UUID(data["uuid"])
         game.boards = data["boards"]
         game.isGameOver = data["isGameOver"]
@@ -302,7 +306,6 @@ class KnuckleboneGame:
         game.turn_history = data["turn_history"]
         game.dice = data["dice"]
         game.current_turn = data["current_turn"]
-        game.bot_player = data["bot_player"]
         game.random_stupidity = data["random_stupidity"]
         return game
 

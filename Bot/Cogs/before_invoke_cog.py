@@ -14,9 +14,12 @@ class BeforeInvokeCog(commands.Cog, name="before_invoke_cog"):
             bot_config = json.load(file)
         with open("Data/bot_data.json", "r+") as file:
             bot_data = json.load(file)
+        with open("Data/server_config.json", "r+") as file:
+            server_config = json.load(file)
 
         # flags to check if data was edited
         edited_bot_config = 0
+        edited_server_config = 0
 
         # checks
         # user data checks
@@ -31,14 +34,14 @@ class BeforeInvokeCog(commands.Cog, name="before_invoke_cog"):
         user_data[f"{ctx.author.id}"]["used_commands"] += 1
 
         # bot data checks
-        bot_data_checks = ["total_used_commands", "last_reset"]
+        bot_data_checks = ["total_used_commands", "last_reset", "total_games_played", "game_counter"]
         for check in bot_data_checks:
             if check not in bot_data:
                 if check == "last_reset":
                     bot_data[check] = round(datetime.datetime.now().timestamp())
                     continue
                 self.bot.logger.info(f"{check} doesn't exist. Generating...")
-                bot_data[check] = 0
+                bot_data[check] = 1 if check in ["game_counter"] else 0
         bot_data["total_used_commands"] += 1
 
         # bot config checks
@@ -46,8 +49,19 @@ class BeforeInvokeCog(commands.Cog, name="before_invoke_cog"):
         for check in bot_config_checks:
             if check not in bot_config:
                 self.bot.logger.info(f"{check} doesn't exist in bot config. Generating...")
-                bot_config[check] = ""
+                bot_config[check] = 0
                 edited_bot_config = 1
+
+        # server config checks
+        server_config_checks = ["games_in_thread", "specified_channel", "edit_game_message", "log_moves", "delete_thread_after_game"]
+        if f"{ctx.guild.id}" not in server_config:
+            self.bot.logger.info(f"{ctx.guild.id} doesn't exist in server config. Generating...")
+            server_config[f"{ctx.guild.id}"] = {}
+        for check in server_config_checks:
+            if check not in server_config[f"{ctx.guild.id}"]:
+                self.bot.logger.info(f"{check} doesn't exist in server config. Generating...")
+                server_config[f"{ctx.guild.id}"][check] = 1 if check in ["games_in_thread", "log_moves", "delete_thread_after_game"] else 0
+                edited_server_config = 1
 
         # save changes
         # user data always changes cuz of used commands
@@ -56,9 +70,12 @@ class BeforeInvokeCog(commands.Cog, name="before_invoke_cog"):
         # bot data always changes cuz of used commands
         with open("Data/bot_data.json", "w") as file:
             json.dump(bot_data, file, indent=4)
-        if edited_bot_config == 1:
+        if edited_bot_config:
             with open("Data/bot_config.json", "w") as file:
                 json.dump(bot_config, file, indent=4)
+        if edited_server_config:
+            with open("Data/server_config.json", "w") as file:
+                json.dump(server_config, file, indent=4)
 
 async def setup(bot) -> None:
     await bot.add_cog(BeforeInvokeCog(bot))
