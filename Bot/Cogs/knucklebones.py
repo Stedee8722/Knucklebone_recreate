@@ -44,10 +44,12 @@ class KnucklebonesCog(commands.Cog):
                         thread = await channel_to_send.create_thread(name = f"Game {game.game_number} - {game.player_one.name} & {game.player_two.name} (Reload)", type = discord.ChannelType.public_thread)
                         view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread)
                         await thread.add_user(ctx.author)
-                        await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        await view.simulate_bot_move(message)
                     else:
                         view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game)
-                        await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        message = await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        await view.simulate_bot_move(message)
                     game_manager.add_game(uuid)
                     return
                 view = confirm_view.ConfirmView(game.player_one, game.player_two, opponent.id, game.game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, game = game)
@@ -137,7 +139,7 @@ class KnucklebonesCog(commands.Cog):
             server_config[f"{ctx.guild.id}"][config] = value
         with open("Data/server_config.json", "w") as file:
             json.dump(server_config, file, indent=4)
-        await ctx.reply(f"Set {config} to {bool(value)}", ephemeral=True)
+        await ctx.reply(f"Set {config} to {bool(server_config[f"{ctx.guild.id}"][config])}", ephemeral=True)
 
     @configure.autocomplete("config")
     async def config_autocomplete(

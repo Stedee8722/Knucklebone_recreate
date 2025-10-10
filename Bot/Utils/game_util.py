@@ -167,12 +167,10 @@ class KnuckleboneGame:
         return total
     
     def move_dice_down(self) -> None:
-        for board in self.boards:
-            for column in board:
-                for i in range(0, 2):
-                    if column[i] == 0 and column[i + 1] != 0:
-                        column[i] = column[i + 1]
-                        column[i + 1] = 0
+        for board_index, board in enumerate(self.boards):
+            for col_index, column in enumerate(board):
+                self.boards[board_index][col_index] = sorted(column, key=lambda x: x == 0)
+
 
     def check_game_over(self) -> None:
         board = self.boards[self.current_player]
