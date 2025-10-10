@@ -67,12 +67,12 @@ class Bot(commands.Bot):
         activity = discord.Game(name="Knucklebones and kicking asses.")
         await client.change_presence(activity=activity)
 
-    async def on_command_error(self, ctx, error) -> None:
-        try:
-            await ctx.reply(f"{error}", ephemeral = True)
-            self.logger.error(f"{error}")
-        except Exception as error:
-            self.logger.error(f"{error}")
+    #async def on_command_error(self, ctx, error) -> None:
+    #    try:
+    #        await ctx.reply(f"{error}", ephemeral = True)
+    #        self.logger.error(f"{error}")
+    #    except Exception as error:
+    #        self.logger.error(f"{error}")
 
 if __name__ == "__main__":
     client = Bot()

@@ -1,5 +1,5 @@
 from typing import List
-import discord, time, datetime, json
+import discord, time, datetime, json, main
 from discord.ext import commands
 from discord import app_commands
 from Utils import game_view, game_util, confirm_view, game_manager
@@ -42,13 +42,13 @@ class KnucklebonesCog(commands.Cog):
                     await ctx.reply("So! We continue.")
                     if games_in_thread:
                         thread = await channel_to_send.create_thread(name = f"Game {game.game_number} - {game.player_one.name} & {game.player_two.name} (Reload)", type = discord.ChannelType.public_thread)
-                        view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread)
+                        view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread, thread)
                         await thread.add_user(ctx.author)
-                        message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                         await view.simulate_bot_move(message)
                     else:
-                        view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game)
-                        message = await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                        view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, channel_to_send)
+                        message = await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                         await view.simulate_bot_move(message)
                     game_manager.add_game(uuid)
                     return
@@ -60,19 +60,19 @@ class KnucklebonesCog(commands.Cog):
                 server_data = json.load(file)
             game_number = server_data[f"{ctx.guild.id}"]["game_counter"]
             if opponent.id == ctx.bot.user.id:
-                game = game_util.KnuckleboneGame(ctx.author, ctx.bot.user, game_number, ctx.guild.id, True)
+                game = game_util.KnuckleboneGame(player_one=ctx.author, player_two=ctx.bot.user, game_number=game_number, guild_id=ctx.guild.id, bot_player=True)
                 game.start_game()
                 message = await ctx.reply("Oh, you're challenging me?")
                 time.sleep(2)
                 if games_in_thread:
                     # specified channel
                     thread = await channel_to_send.create_thread(name = f"Game {game_number} - {ctx.author.name} & {opponent.name}", type = discord.ChannelType.public_thread)
-                    view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread)
+                    view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread, thread)
                     await thread.add_user(ctx.author)
-                    message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                    message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                 else:
-                    view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game)
-                    await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+                    view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, channel_to_send)
+                    await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                 with open("Data/server_data.json", "r") as file:
                     server_data = json.load(file)
                 if server_data[f"{ctx.guild.id}"]["game_counter"] >= game.game_number:
@@ -90,8 +90,9 @@ class KnucklebonesCog(commands.Cog):
             # specified channel
             message = await channel_to_send.send(f"<@{opponent.id}>! You have been challenged to a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view)
             view.message = message
-        except AttributeError:
-            await channel_to_send.send("Error: Can't create threads here.")
+        except Exception as e:
+            await channel_to_send.send("Something went wrong, please try again later. Error: " + str(e))
+            main.logger.exception(f'Error in knucklebones command: {e}', exc_info=True)
             return
         
     @commands.hybrid_command(name="set-channel", with_app_command=True, description="Sets channel to play Knucklebones")

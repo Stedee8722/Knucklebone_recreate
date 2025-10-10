@@ -5,6 +5,11 @@ class General(Exception):
         main.logger.exception(f'General Exception: {obj}', exc_info=True)
         pass
 
+class GameInitError(Exception):
+    def __init__(self, obj):
+        main.logger.exception(f'Game Initialization Exception: {obj}', exc_info=True)
+        pass
+
 class InputError(Exception):
     def __init__(self, obj):
         main.logger.exception(f'Input Error Exception: {obj}', exc_info=True)

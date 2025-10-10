@@ -1,8 +1,9 @@
 import discord, main, json
-from Utils import game_util, game_view, game_manager
+from Utils import game_util, game_view, game_manager, error_view
+from Exceptions.BotError import GameInitError
 
 class ConfirmView(discord.ui.View):
-    def __init__(self, player_one, player_two, id_of_opponent, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, thread = None, game = None):
+    def __init__(self, player_one, player_two, id_of_opponent, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, game = None):
         super().__init__(timeout=180)
         self.player_one = player_one
         self.player_two = player_two
@@ -12,7 +13,6 @@ class ConfirmView(discord.ui.View):
         self.edit_game_message = edit_game_message
         self.log_moves = log_moves
         self.delete_thread_after_game = delete_thread_after_game
-        self.thread = thread
         self.message = None
         self.game = game
 
@@ -27,26 +27,23 @@ class ConfirmView(discord.ui.View):
         if not await self.check_owner(interaction): return
         if not self.game:
             flag = 1
-            game = game_util.KnuckleboneGame(self.player_one, self.player_two, self.game_number, interaction.guild.id)
+            game = game_util.KnuckleboneGame(player_one=self.player_one, player_two=self.player_two, game_number=self.game_number, guild_id=interaction.guild.id)
             game.start_game()
-            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game, self.thread)
+            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game)
         else:
             flag = 0
             game = self.game
-            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game, self.thread)
+            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game)
         self.stop()
         
         await interaction.response.edit_message(content=f"**{self.player_two.name}** accepted a Knucklebones challenge from **{self.player_one.name}**.", view=None)
-        if self.games_in_thread:
-            try:
-                thread = await interaction.channel.create_thread(name = f"Game {self.game_number} - {self.player_one.name} & {self.player_two.name}{" (Reload)" if not flag else ""}", type = discord.ChannelType.public_thread)
-                view.thread = thread
-                await thread.add_user(self.player_one)
-                await thread.add_user(self.player_two)
-                await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
-            except AttributeError:
-                await interaction.channel.send("Error: Can't create threads here.")
-                return
+        if self.games_in_thread:            
+            thread = await interaction.channel.create_thread(name = f"Game {self.game_number} - {self.player_one.name} & {self.player_two.name}{" (Reload)" if not flag else ""}", type = discord.ChannelType.public_thread)
+            view.thread = thread
+            view.channel = thread
+            await thread.add_user(self.player_one)
+            await thread.add_user(self.player_two)
+            await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
             if flag:
                 with open("Data/server_data.json", "r") as file:
                     server_data = json.load(file)
@@ -55,7 +52,8 @@ class ConfirmView(discord.ui.View):
                     with open("Data/server_data.json", "w") as file:
                         json.dump(server_data, file, indent=4)
         else:
-            await interaction.channel.send(f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}", view=view, embed=game.get_embed())
+            view.channel = interaction.channel
+            await interaction.channel.send(f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
         game_manager.add_game(str(game.uuid))
 
     @discord.ui.button(label="No", style=discord.ButtonStyle.grey, custom_id="confirm_no")
@@ -74,5 +72,6 @@ class ConfirmView(discord.ui.View):
 
     async def on_error(self, interaction: discord.Interaction[discord.Client], error: Exception, item) -> None:
         main.logger.error(f"Error in ConfirmView: {error}, item: {item}, interaction: {interaction}")
-        await interaction.channel.send(f"An error occurred while handling your request. Please try again.\n-# Debug info: {error} | {item} | {interaction}")
+        view = error_view.ErrorView("An error occurred while handling your request. Please try again.", f"Debug info: {error} | {item} | {interaction}")
+        await interaction.channel.send(f"An error occurred while handling your request. Please try again.", view=view)
         return await super().on_error(interaction, error, item)
