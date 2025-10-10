@@ -1,4 +1,4 @@
-import random, uuid, discord, os
+import random, uuid, discord, os, main
 
 NUMBER_OF_PLAYERS = 2
 NUMBER_OF_COLUMNS = 3
@@ -62,11 +62,13 @@ class KnuckleboneGame:
             if isinstance(input, int) and 0 < input <= amount:
                 return input
             else:
+                main.logger.error(f"Invalid input: {input}, expected 1 to {amount}")
                 raise ValueError("Input must be an integer between 1 and " + str(amount) + ". You provided: " + str(input))
         else:
             if isinstance(input, int) and 0 <= input < amount:
                 return input
             else:
+                main.logger.error(f"Invalid input: {input}, expected 0 to {amount - 1}")
                 raise ValueError("Input must be an integer between 0 and " + str(amount - 1) + ". You provided: " + str(input))
     
     def check_column_space(self, column: int) -> bool:
@@ -96,7 +98,7 @@ class KnuckleboneGame:
             print("Be stupid")
             return result
         scores = [0] * NUMBER_OF_COLUMNS
-        for i, column in enumerate(self.boards[1 - self.current_player]):
+        for i, column in enumerate(self.get_board(1 - self.current_player)):
             if not self.check_column_space(i):
                 scores[i] = -1
                 continue
@@ -117,8 +119,6 @@ class KnuckleboneGame:
                         scores[i] += 1
                     case 2:
                         scores[i] += 2
-                    case 3:
-                        scores[i] += 5
         best_score = max(scores)
         best_columns = [i for i, score in enumerate(scores) if score == best_score]
         return random.choice(best_columns)
@@ -127,6 +127,7 @@ class KnuckleboneGame:
         self.turn_history.append({"board": self.current_player, "column": column, "dice": self.dice, "turn": self.current_turn})
 
     def count_matching_dice_self(self, column: int) -> int:
+        self.check_input(column, NUMBER_OF_COLUMNS)
         count = 0
         for die in self.boards[self.current_player][column]:
             if die == self.dice:
@@ -134,6 +135,7 @@ class KnuckleboneGame:
         return count
 
     def count_matching_dice_opponent(self, column: int) -> int:
+        self.check_input(column, NUMBER_OF_COLUMNS)
         count = 0
         for die in self.boards[1 - self.current_player][column]:
             if die == self.dice:
@@ -289,12 +291,13 @@ class KnuckleboneGame:
             "current_turn": self.current_turn,
             "bot_player": self.bot_player,
             "random_stupidity": self.random_stupidity,
-            "game_number": self.game_number
+            "game_number": self.game_number,
+            "guild_id": self.guild_id
         }
 
     @classmethod
     def from_dict(cls, ctx, data: dict):
-        game = cls(ctx.guild.get_member(data["players"][0]), ctx.guild.get_member(data["players"][1]), data["game_number"], data["bot_player"])
+        game = cls(ctx.guild.get_member(data["players"][0]), ctx.guild.get_member(data["players"][1]), data["game_number"], data["guild_id"], data["bot_player"])
         game.uuid = uuid.UUID(data["uuid"])
         game.boards = data["boards"]
         game.isGameOver = data["isGameOver"]
@@ -328,15 +331,17 @@ class KnuckleboneGame:
         """Load game by id from the save file."""
         import json, os
         if not os.path.exists(SAVE_FILE):
+            main.logger.info("Save file does not exist.")
             return None
 
         with open(SAVE_FILE, "r") as f:
             data = json.load(f)
 
-        if game_id not in data:
+        if game_id not in data[f"{ctx.guild.id}"]:
+            main.logger.info("Game ID not found in save file.")
             return None
 
-        return KnuckleboneGame.from_dict(ctx, data[ctx.guild.id][game_id])
+        return KnuckleboneGame.from_dict(ctx, data[f"{ctx.guild.id}"][game_id])
     
     def save_data(self):
         import json, os
