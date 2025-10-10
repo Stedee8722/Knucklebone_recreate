@@ -23,7 +23,7 @@ class ForFunCog(commands.Cog, name="for_fun"):
         return
     
     #!kb_stats
-    @commands.hybrid_command(name="kb_stats", description="Get your overall server stats.", with_app_command=True, aliases=["knucklebones_stats"])
+    @commands.hybrid_command(name="knucklebones_stats", description="Get your overall server stats.", with_app_command=True, aliases=["kb_stats"])
     async def kb_stats(self, ctx):
         await ctx.defer(ephemeral=True)
         with open("Data/user_data.json", "r") as file:
@@ -32,7 +32,9 @@ class ForFunCog(commands.Cog, name="for_fun"):
             server_data = json.load(file)
         with open("Data/bot_data.json", "r") as file:
             bot_data = json.load(file)
-        await ctx.reply(content="", embed = await embed_util.kb_stats_embed_build(ctx, user_data[f"{ctx.author.id}"], server_data[f"{ctx.guild.id}"]["users"][f"{ctx.author.id}"], bot_data["last_reset"], ctx.author.id))
+        with open("Data/server_config.json", "r") as file:
+            server_config = json.load(file)
+        await ctx.reply(content="", embed = await embed_util.kb_stats_embed_build(ctx, user_data[f"{ctx.author.id}"], server_data[f"{ctx.guild.id}"]["users"][f"{ctx.author.id}"], bot_data["last_reset"], ctx.author.id), ephemeral = True if server_config[f"{ctx.guild.id}"]["ephemeral_stats"] == 1 else False)
         return
 
 async def setup(bot) -> None:

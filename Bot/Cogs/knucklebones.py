@@ -118,7 +118,8 @@ class KnucklebonesCog(commands.Cog):
             "specified_channel": 0,
             "edit_game_message": 0,
             "log_moves": 1,
-            "delete_thread_after_game": 1
+            "delete_thread_after_game": 1,
+            "ephemeral_stats": 1
         }
         with open("Data/server_config.json", "r") as file:
             server_config = json.load(file)
@@ -144,7 +145,7 @@ class KnucklebonesCog(commands.Cog):
         interaction: discord.Interaction,
         current: str,
     ) -> List[app_commands.Choice[str]]:
-        choices = ["Games in Thread", "Edit Game Message", "Log Moves", "Delete Thread after Game", "Reset All"]
+        choices = ["Games in Thread", "Edit Game Message", "Log Moves", "Delete Thread after Game", "Reset All", "Ephemeral Stats"]
         return [
             app_commands.Choice(name=choice, value="_".join(choice.lower().split()))
             for choice in choices if current.lower() in choice.lower()
