@@ -19,7 +19,7 @@ for filename in os.listdir(LOG_FOLDER):
         filepath = os.path.join(LOG_FOLDER, filename)
         try:
             with open(filepath, "w", encoding="utf-8") as file:
-                json.dump({}, file, indent=4)
+                file.write("")
             print(f"✔ Cleared {filename}")
         except Exception as e:
             print(f"❌ Failed to clear {filename}: {e}")
