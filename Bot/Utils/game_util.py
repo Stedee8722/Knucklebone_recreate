@@ -265,10 +265,6 @@ class KnuckleboneGame:
         embed.add_field(name = self.player_two.name, value=self.calc_total(1), inline=True)
 
         embed.set_footer(text=f"Game ID: {self.uuid}")
-
-        #if self.isGameOver:
-        #    winner_text = "It's a tie!" if self.get_winner() == 2 else f"Player {self.get_winner() + 1} wins!"
-        #    embed.add_field(name="Game Over", value=winner_text, inline=False)
         return embed
     
     @classmethod
