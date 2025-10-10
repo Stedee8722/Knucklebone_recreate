@@ -84,7 +84,7 @@ class KnucklebonesCog(commands.Cog):
                     await view.start_bot_move(message)
                 return
             if opponent.bot:
-                return await ctx.reply("You cannot play against other bots, please against me instead!")
+                return await ctx.reply("You cannot play against other bots, play against me instead!")
             view = confirm_view.ConfirmView(ctx.author, opponent, opponent.id, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game)
             await ctx.send(f"You have challenged **{opponent.name}** to a game of knucklebones!")
             # specified channel
