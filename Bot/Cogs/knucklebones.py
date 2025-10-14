@@ -52,7 +52,7 @@ class KnucklebonesCog(commands.Cog):
                         await view.simulate_bot_move(message)
                     game_manager.add_game(uuid)
                     return
-                view = confirm_view.ConfirmView(game.player_one, game.player_two, opponent.id, game.game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, game = game)
+                view = confirm_view.ConfirmView(game.player_one, game.player_two, opponent.id, game.game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, channel_to_send, game = game)
                 await ctx.send(f"You have challenged **{opponent.name}** to continue a game of knucklebones!")
                 await channel_to_send.send(content=f"<@{opponent.id}>! You have been challenged to continue a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view, embed=game.get_embed())
                 return
@@ -85,7 +85,7 @@ class KnucklebonesCog(commands.Cog):
                 return
             if opponent.bot:
                 return await ctx.reply("You cannot play against other bots, play against me instead!")
-            view = confirm_view.ConfirmView(ctx.author, opponent, opponent.id, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game)
+            view = confirm_view.ConfirmView(ctx.author, opponent, opponent.id, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, channel_to_send)
             await ctx.send(f"You have challenged **{opponent.name}** to a game of knucklebones!")
             # specified channel
             message = await channel_to_send.send(f"<@{opponent.id}>! You have been challenged to a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view)

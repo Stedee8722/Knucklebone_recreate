@@ -3,7 +3,7 @@ from Utils import game_util, game_view, game_manager, error_view
 from Exceptions.BotError import GameInitError
 
 class ConfirmView(discord.ui.View):
-    def __init__(self, player_one, player_two, id_of_opponent, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, game = None):
+    def __init__(self, player_one, player_two, id_of_opponent, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, channel, game = None):
         super().__init__(timeout=180)
         self.player_one = player_one
         self.player_two = player_two
@@ -14,6 +14,7 @@ class ConfirmView(discord.ui.View):
         self.log_moves = log_moves
         self.delete_thread_after_game = delete_thread_after_game
         self.message = None
+        self.channel = channel
         self.game = game
 
     async def check_owner(self, interaction: discord.Interaction) -> bool:
@@ -29,11 +30,11 @@ class ConfirmView(discord.ui.View):
             flag = 1
             game = game_util.KnuckleboneGame(player_one=self.player_one, player_two=self.player_two, game_number=self.game_number, guild_id=interaction.guild.id)
             game.start_game()
-            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game)
+            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game, self.channel)
         else:
             flag = 0
             game = self.game
-            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game)
+            view = game_view.GameView(game, self.edit_game_message, self.log_moves, self.delete_thread_after_game, self.channel)
         self.stop()
         
         await interaction.response.edit_message(content=f"**{self.player_two.name}** accepted a Knucklebones challenge from **{self.player_one.name}**.", view=None)

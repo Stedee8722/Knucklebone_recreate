@@ -19,7 +19,7 @@ class GameView(discord.ui.View):
         self.log_moves = log_moves
         self.delete_thread_after_game = delete_thread_after_game
         self.thread = thread
-        self.turn_deadline = round(datetime.now().timestamp() + 60)
+        self.turn_deadline = round(datetime.now().timestamp() + 120)
         self.channel = channel
         self.turn_timer_task = asyncio.create_task(self.turn_timer())
 
@@ -66,6 +66,7 @@ class GameView(discord.ui.View):
             game_manager.remove_game(str(self.game.uuid))
             asyncio.create_task(self.game_over(channel)) 
             return True
+        self.turn_deadline = round(datetime.now().timestamp() + 120)
         return False
 
     async def game_over(self, channel) -> None:
@@ -145,9 +146,9 @@ class GameView(discord.ui.View):
             if self.log_moves:
                 await interaction.channel.send(f"**{self.game.player_one.name if self.game.current_player == 1 else self.game.player_two.name}** places {self.game.convert_value_to_emoji(self.game.last_dice, True)} in {['1️⃣ **Top**', '2️⃣ **Mid**', '3️⃣ **Bot**'][last_move]}!", allowed_mentions=False)
             if self.edit_game_message:
-                await interaction.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
+                await interaction.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}\n*Remaining time for move: <t:{self.turn_deadline}:R>*", embed=self.game.get_embed(), view=self)
             else:
-                await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
+                await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}\n*Remaining time for move: <t:{self.turn_deadline}:R>*", embed=self.game.get_embed(), view=self)
             if await self.check_game_over(interaction.channel):
                 return
 
@@ -160,8 +161,8 @@ class GameView(discord.ui.View):
             if self.log_moves:
                 await interaction.channel.send(f"**{self.game.player_one.name if self.game.current_player == 1 else self.game.player_two.name}** places {self.game.convert_value_to_emoji(self.game.last_dice, True)} in {['1️⃣ **Top**', '2️⃣ **Mid**', '3️⃣ **Bot**'][last_move]}!", allowed_mentions=False)
             if self.edit_game_message:
-                await interaction.message.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
+                await interaction.message.edit(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}\n*Remaining time for move: <t:{self.turn_deadline}:R>*", embed=self.game.get_embed(), view=self)
             else:
-                await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}", embed=self.game.get_embed(), view=self)
+                await interaction.channel.send(content=f"Hey **<@{self.game.players[self.game.current_player]}>**, it's your turn! Your die is: {self.game.convert_value_to_emoji(self.game.dice, True)}\n*Remaining time for move: <t:{self.turn_deadline}:R>*", embed=self.game.get_embed(), view=self)
             if await self.check_game_over(interaction.channel):
                 return
