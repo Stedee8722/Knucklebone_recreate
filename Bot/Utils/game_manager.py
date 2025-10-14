@@ -16,13 +16,14 @@ def add_game(identifier: str):
     caller_code = caller_frame.f_code
     # Get the name of the caller's method
     caller_name = caller_code.co_name
-    main.logger.info(f"Adding game {identifier} to active games list.\n Active games: {active_games}\n From: {caller_name}")
     active_games.append(identifier)
+    main.logger.info(f"Adding game {identifier} to active games list.\n Active games: {active_games}\n From: {caller_name}")
 
 def remove_game(identifier: str):
     """Remove a finished game."""
-    main.logger.info(f"Removing game {identifier} to active games list.\n Active games: {active_games}")
-    try: active_games.remove(identifier)
+    try:
+        active_games.remove(identifier)
+        main.logger.info(f"Removing game {identifier} to active games list.\n Active games: {active_games}")
     except Exception as exception:
         # Get the current frame
         current_frame = inspect.currentframe()

@@ -1,4 +1,4 @@
-import random, uuid, discord, os, main
+import random, uuid, discord, os, main, json
 
 NUMBER_OF_PLAYERS = 2
 NUMBER_OF_COLUMNS = 3
@@ -8,6 +8,7 @@ SAVE_FILE = "Data/game_data.json"
 USER_DATA_FILE = "Data/user_data.json"
 BOT_DATA_FILE = "Data/bot_data.json"
 SERVER_DATA_FILE = "Data/server_data.json"
+SERVER_CONFIG_FILE = "Data/server_config.json"
 KNUKLEBONES_EMOJI = os.getenv("KNUKLEBONES_EMOJI")
 DICE_1_EMOJI = os.getenv("DICE_1_EMOJI")
 DICE_2_EMOJI = os.getenv("DICE_2_EMOJI")
@@ -17,7 +18,7 @@ DICE_5_EMOJI = os.getenv("DICE_5_EMOJI")
 DICE_6_EMOJI = os.getenv("DICE_6_EMOJI")
 
 class KnuckleboneGame:
-    def __init__(self, player_one: discord.Member, player_two: discord.Member, game_number:int, guild_id:int, bot_player: bool = False):
+    def __init__(self, player_one: discord.Member, player_two: discord.Member, game_number:int, guild_id:int, bot_player: bool = False, user_mode: bool = False):
         self.boards = [
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]],  # Player 1's board
             [[0, 0, 0], [0, 0, 0], [0, 0, 0]]   # Player 2's board
@@ -31,6 +32,8 @@ class KnuckleboneGame:
         self.player_two = player_two
         self.players = [player_one.id, player_two.id]
         self.dice = 0
+        self.user_mode = user_mode
+        self.config = self.get_config()
         self.current_turn = 0
         self.turn_history = []  # To keep track of turns
         self.winner = -1  # -1 means no winner yet
@@ -86,10 +89,42 @@ class KnuckleboneGame:
                 break
         self.save_turn_history(column)
         self.check_clash(column)
-        self.check_game_over()
         self.move_dice_down()
+        self.check_game_over()
         if not self.isGameOver:
             self.next_turn()
+
+    def get_config(self) -> dict:
+        if self.user_mode:
+            return {
+                "games_in_thread": 0,
+                "specified_channel": 0,
+                "edit_game_message": 0,
+                "log_moves": 0,
+                "delete_thread_after_game": 0,
+                "ephemeral_stats": 1
+            }
+        default_config = {
+            "games_in_thread": 1,
+            "specified_channel": 0,
+            "edit_game_message": 0,
+            "log_moves": 1,
+            "delete_thread_after_game": 1,
+            "ephemeral_stats": 1
+        }
+
+        if not os.path.exists(SERVER_CONFIG_FILE):
+            with open(SERVER_CONFIG_FILE, "w") as f:
+                json.dump({}, f, indent=4)
+
+        with open(SERVER_CONFIG_FILE, "r") as f:
+            data = json.load(f)
+
+        if str(self.guild_id) not in data:
+            data[str(self.guild_id)] = default_config
+            with open(SERVER_CONFIG_FILE, "w") as f:
+                json.dump(data, f, indent=4)
+        return data[str(self.guild_id)]
 
     def AI_move(self, random_stupidity: float) -> int:
         if random.random() > random_stupidity:
@@ -184,7 +219,7 @@ class KnuckleboneGame:
         self.get_winner()
         self.save()
         self.save_data()
-        return
+        return True
     
     def get_winner(self) -> int:
         if self.winner != -1:
@@ -304,7 +339,6 @@ class KnuckleboneGame:
 
     def save(self):
         """Save the current game state to a file."""
-        import json, os
         if not os.path.exists(SAVE_FILE):
             with open(SAVE_FILE, "w") as f:
                 json.dump({}, f)
@@ -323,7 +357,6 @@ class KnuckleboneGame:
     @staticmethod
     def load(ctx, game_id: str):
         """Load game by id from the save file."""
-        import json, os
         if not os.path.exists(SAVE_FILE):
             main.logger.info("Save file does not exist.")
             return None
@@ -338,7 +371,6 @@ class KnuckleboneGame:
         return KnuckleboneGame.from_dict(ctx, data[f"{ctx.guild.id}"][game_id])
     
     def save_data(self):
-        import json, os
         if not os.path.exists(USER_DATA_FILE):
             with open(USER_DATA_FILE, "w") as f:
                 json.dump({}, f)

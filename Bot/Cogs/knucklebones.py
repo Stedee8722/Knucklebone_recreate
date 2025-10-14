@@ -2,30 +2,55 @@ from typing import List
 import discord, time, datetime, json, main
 from discord.ext import commands
 from discord import app_commands
-from Utils import game_view, game_util, confirm_view, game_manager
+from Utils import game_view, game_util, confirm_view, confirm_view_user, game_manager
 
 class KnucklebonesCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @app_commands.command(name="knucklebones_user", description="Play a game of Knucklebones!")
+    @app_commands.describe(opponent="Your opponent?")
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=True)
+    @app_commands.allowed_installs(guilds=False, users=True)
+    @app_commands.user_install()
+    async def knucklebones_users(self, interaction: discord.Interaction, opponent: discord.Member):
+        #try:
+            with open("Data/server_data.json", "r") as file:
+                server_data = json.load(file)
+            if f"{interaction.guild.id}" not in server_data:
+                server_data[f"{interaction.guild.id}"] = {
+                    "game_counter": 1,
+                    "total_used_commands": 0,
+                    "total_games_played": 0,
+                    "users": {}
+                }
+                with open("Data/server_data.json", "w") as file:
+                    json.dump(server_data, file, indent=4)
+            game_number = server_data[f"{interaction.guild.id}"]["game_counter"]
+            if opponent.id == self.bot.user.id:
+                return await interaction.response.send_message("Playing against Knucklebot isn't supported for user installed apps!")
+            if opponent.bot:
+                return await interaction.response.send_message("You cannot play against other bots, play against someone instead!")
+            view = confirm_view_user.ConfirmView(interaction.user, opponent, opponent.id, game_number)
+            # specified channel
+            await interaction.response.send_message(f"You have challenged **{opponent.name}** to a game of knucklebones!\n<@{opponent.id}>! You have been challenged to a game of Knucklebones by **{interaction.user.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view)
+            view.message = await interaction.original_response()
+        #except Exception as e:
+        #    await interaction.channel.send("Something went wrong, please try again later. Error: " + str(e))
+        #    main.logger.exception(f'Error in knucklebones command: {e}', exc_info=True)
+        #    return
+
     @commands.hybrid_command(name="knucklebones", description="Play a game of Knucklebones!", with_app_command=True)
     @app_commands.describe(opponent="Your opponent?", uuid="(Optional) The UUID of the game you want to load.")
     async def knucklebones(self, ctx: commands.Context, opponent: discord.Member, uuid: str = None):
         try:
-            with open("Data/server_config.json", "r") as file:
-                server_config = json.load(file)
-            games_in_thread = server_config[f"{ctx.guild.id}"]["games_in_thread"]
-            specified_channel = server_config[f"{ctx.guild.id}"]["specified_channel"]
-            channel_to_send = ctx.guild.get_channel(int(specified_channel)) if specified_channel else ctx.channel
-            edit_game_message = server_config[f"{ctx.guild.id}"]["edit_game_message"]
-            log_moves = server_config[f"{ctx.guild.id}"]["log_moves"]
-            delete_thread_after_game = server_config[f"{ctx.guild.id}"]["delete_thread_after_game"]
             await ctx.defer(ephemeral=False)
             if uuid:
                 if game_manager.is_active(uuid):
                     await ctx.reply("This game is already running in another thread or channel!")
                     return
                 game = game_util.KnuckleboneGame.load(ctx, uuid)
+                channel_to_send = ctx.guild.get_channel(int(game.config["specified_channel"])) if game.config["specified_channel"] else ctx.channel
                 if not game:
                     await ctx.reply("Can't find game!")
                     return
@@ -40,19 +65,19 @@ class KnucklebonesCog(commands.Cog):
                     return
                 if game.player_two.id == ctx.bot.user.id or game.player_one.id == game.player_two.id == ctx.author.id:
                     await ctx.reply("So! We continue.")
-                    if games_in_thread:
+                    if game.config["games_in_thread"]:
                         thread = await channel_to_send.create_thread(name = f"Game {game.game_number} - {game.player_one.name} & {game.player_two.name} (Reload)", type = discord.ChannelType.public_thread)
-                        view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread, thread)
+                        view = game_view.GameView(game, thread, thread)
                         await thread.add_user(ctx.author)
                         message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                         await view.simulate_bot_move(message)
                     else:
-                        view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, channel_to_send)
+                        view = game_view.GameView(game, channel_to_send)
                         message = await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                         await view.simulate_bot_move(message)
                     game_manager.add_game(uuid)
                     return
-                view = confirm_view.ConfirmView(game.player_one, game.player_two, opponent.id, game.game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game, game = game)
+                view = confirm_view.ConfirmView(game.player_one, game.player_two, opponent.id, game.game_number, channel_to_send, game = game)
                 await ctx.send(f"You have challenged **{opponent.name}** to continue a game of knucklebones!")
                 await channel_to_send.send(content=f"<@{opponent.id}>! You have been challenged to continue a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view, embed=game.get_embed())
                 return
@@ -64,14 +89,14 @@ class KnucklebonesCog(commands.Cog):
                 game.start_game()
                 message = await ctx.reply("Oh, you're challenging me?")
                 time.sleep(2)
-                if games_in_thread:
+                if game.config["games_in_thread"]:
                     # specified channel
                     thread = await channel_to_send.create_thread(name = f"Game {game_number} - {ctx.author.name} & {opponent.name}", type = discord.ChannelType.public_thread)
-                    view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, thread, thread)
+                    view = game_view.GameView(game, thread, thread)
                     await thread.add_user(ctx.author)
                     message = await thread.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                 else:
-                    view = game_view.GameView(game, edit_game_message, log_moves, delete_thread_after_game, channel_to_send)
+                    view = game_view.GameView(game, channel_to_send)
                     await channel_to_send.send(content=f"Hey **<@{game.players[game.current_player]}>**, it's your turn! Your die is: {game.convert_value_to_emoji(game.dice, True)}\n*Remaining time for move: <t:{view.turn_deadline}:R>*", view=view, embed=game.get_embed())
                 with open("Data/server_data.json", "r") as file:
                     server_data = json.load(file)
@@ -85,7 +110,7 @@ class KnucklebonesCog(commands.Cog):
                 return
             if opponent.bot:
                 return await ctx.reply("You cannot play against other bots, play against me instead!")
-            view = confirm_view.ConfirmView(ctx.author, opponent, opponent.id, game_number, games_in_thread, edit_game_message, log_moves, delete_thread_after_game)
+            view = confirm_view.ConfirmView(ctx.author, opponent, opponent.id, game_number, channel_to_send)
             await ctx.send(f"You have challenged **{opponent.name}** to a game of knucklebones!")
             # specified channel
             message = await channel_to_send.send(f"<@{opponent.id}>! You have been challenged to a game of Knucklebones by **{ctx.author.name}**. Do you accept?\nThis challenge will expire in <t:{datetime.datetime.now().timestamp().__round__() + 180}:R>.", view=view)
